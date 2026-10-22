@@ -1,0 +1,20 @@
+The following matrices show results computed from file "hald.mat".
+- Matrices computed from "ovariancancer.mat" are quite large and "hald" should be sufficient for verifying correctness.
+
+>>> python lab03b_pca_svd.py
+Angles between PCAEigen (B) and PCASVD (V)
+[[ 0. 90. 90. 90.]
+ [90.  0. 90. 90.]
+ [90. 90.  0. 90.]
+ [90. 90. 90.  0.]]
+Angles between PCASVD (V) and Sklearn (C)
+[[180.  90.  90.  90.]
+ [ 90. 180.  90.  90.]
+ [ 90.  90. 180.  90.]
+ [ 90.  90.  90.   0.]]
+Angles between PCAEigen (B) and Sklearn (C)
+[[180.  90.  90.  90.]
+ [ 90. 180.  90.  90.]
+ [ 90.  90. 180.  90.]
+ [ 90.  90.  90.   0.]]
+
