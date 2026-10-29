@@ -1,8 +1,9 @@
-
-from typing import Tuple, Sequence
 import os
-import numpy as np
+from typing import Sequence, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 class MnistDataset:
     """
@@ -21,8 +22,7 @@ class MnistDataset:
     this class or write your own loader.
     """
 
-    def __init__(self, data : str = "mnist_train.npz", labels : str = None):
-
+    def __init__(self, data: str = "mnist_train.npz", labels: str = None):
         if not os.path.exists(data):
             raise ValueError("Requested mnist data file not found!")
         if (labels is not None) and (not os.path.exists(labels)):
@@ -36,12 +36,13 @@ class MnistDataset:
             self.imgs = np.load(data)
             self.labels = np.load(labels)
 
+
 def plot_data_with_pcs(
-        data : np.ndarray,
-        labels : np.ndarray,
-        mu : Tuple[float, float] = None,
-        pcs : np.ndarray = None
-    ) -> None:
+    data: np.ndarray,
+    labels: np.ndarray,
+    mu: Tuple[float, float] = None,
+    pcs: np.ndarray = None,
+) -> None:
     """
     Plots 2D data together with the axes formed by the principal components.
     Data (and mu) has to be in row form, the 'pcs' matrix has to have
@@ -54,24 +55,31 @@ def plot_data_with_pcs(
     - 'pcs' - Principle components given in columns.
     """
     axes = np.asarray([6, 3]) * pcs if pcs is not None else None
-    fig, ax = plt.subplots(1, 1, subplot_kw={'aspect': 'equal'})
-    ax.set_title(f"Data coloured according to labels{"with PCs" if pcs is not None else ""}")
+    fig, ax = plt.subplots(1, 1, subplot_kw={"aspect": "equal"})
+    ax.set_title(
+        f"Data coloured according to labels{'with PCs' if pcs is not None else ''}"
+    )
     ax.scatter(data[:, 0], data[:, 1], c=labels)
     if pcs is not None:
         ax.plot(
-            [mu[0], mu[0] + axes[0, 0]], [mu[1], mu[1] + axes[1, 0]], color='blue', linewidth=5
+            [mu[0], mu[0] + axes[0, 0]],
+            [mu[1], mu[1] + axes[1, 0]],
+            color="blue",
+            linewidth=5,
         )
         ax.plot(
-            [mu[0], mu[0] + axes[0, 1]], [mu[1], mu[1] + axes[1, 1]], color='green', linewidth=5
+            [mu[0], mu[0] + axes[0, 1]],
+            [mu[1], mu[1] + axes[1, 1]],
+            color="green",
+            linewidth=5,
         )
     fig.tight_layout()
     plt.show()
 
+
 def plot_histograms(
-        points : np.ndarray,
-        labels : np.ndarray,
-        colors : Sequence[str] = None
-    ) -> None:
+    points: np.ndarray, labels: np.ndarray, colors: Sequence[str] = None
+) -> None:
     """
     Plots the dataset together with histograms showing the distribution of the individual
     classes.
@@ -95,43 +103,54 @@ def plot_histograms(
             np.histogram(
                 points[labels == k, i],
                 bin_count[i],
-                range=(np.min(points[:, i]), np.max(points[:, i]))
-            ) for k in classes
-        ] for i in range(points.shape[1])
+                range=(np.min(points[:, i]), np.max(points[:, i])),
+            )
+            for k in classes
+        ]
+        for i in range(points.shape[1])
     ]
-    
+
     colour_selection = [
-        'blue', 'red', 'green', 'cyan', 'magenta',
-        'yellow', 'black', 'brown', 'coral', 'gold'
+        "blue",
+        "red",
+        "green",
+        "cyan",
+        "magenta",
+        "yellow",
+        "black",
+        "brown",
+        "coral",
+        "gold",
     ]
     if colors is None:
         colors = np.asarray(colour_selection)[np.asarray(labels, np.int8) - 1]
     else:
         colour_selection = colors[idx]
-    
+
     fig, ax = plt.subplots(
-        points.shape[1], points.shape[1], figsize=(11, 8), subplot_kw={'aspect': 'auto'}
+        points.shape[1], points.shape[1], figsize=(11, 8), subplot_kw={"aspect": "auto"}
     )
     fig.suptitle("Discriminability of principle components")
     for i in range(points.shape[1]):
         for j in range(points.shape[1]):
-            ax_ij : plt.Axes = ax[i, j]
+            ax_ij: plt.Axes = ax[i, j]
             if i == j:
                 for k in range(len(bin_values[i])):
                     ax_ij.step(
                         bin_values[i][k][1][:-1],
                         bin_values[i][k][0],
-                        where='post',
-                        c=colour_selection[classes[k] - 1]
+                        where="post",
+                        c=colour_selection[classes[k] - 1],
                     )
             else:
                 ax_ij.scatter(points[:, j], points[:, i], c=colors)
     fig.tight_layout()
     plt.show()
 
+
 def plot_variance(
-        ax : plt.Axes, explained : np.ndarray, cumulative : np.ndarray, name : str
-    ) -> None:
+    ax: plt.Axes, explained: np.ndarray, cumulative: np.ndarray, name: str
+) -> None:
     """
     Plots a scree graph consisting of explaiend variances and their cumulative sum
     given as arguments into a pyplot Axes object.
@@ -143,13 +162,21 @@ def plot_variance(
     + 'name' - The title of the Axes object.
     """
     ax.set_title(name)
-    ax.axhline(color='black', ls='--')
-    ax.axvline(1.0, color='black', ls='--')
+    ax.axhline(color="black", ls="--")
+    ax.axvline(1.0, color="black", ls="--")
     ax.xaxis.get_major_locator().set_params(integer=True)
     ax.plot(
-        range(1, explained.size + 1), explained, color='red', marker='o', label="Explained"
+        range(1, explained.size + 1),
+        explained,
+        color="red",
+        marker="o",
+        label="Explained",
     )
     ax.plot(
-        range(1, cumulative.size + 1), cumulative, color='blue', marker='o', label="Cumulative"
+        range(1, cumulative.size + 1),
+        cumulative,
+        color="blue",
+        marker="o",
+        label="Cumulative",
     )
     ax.legend()
