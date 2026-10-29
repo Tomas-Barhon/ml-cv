@@ -1,6 +1,6 @@
-
 import argparse
-from typing import Union, Tuple
+from typing import Tuple, Union
+
 import numpy as np
 import scipy.stats
 
@@ -10,6 +10,7 @@ parser.add_argument(
     "--example", default=42, type=int, help="Example argument for your custom tests."
 )
 
+
 class EMGMM:
     """
     Custom implmentation of gaussian mixture model using the expectation-maximisation
@@ -17,13 +18,13 @@ class EMGMM:
     """
 
     def __init__(
-            self,
-            n_components : int = 1,
-            tol : float = 0.001,
-            max_iter : int = 100,
-            random_state : Union[int, np.random.RandomState] = None,
-            init_means : np.ndarray = None
-        ) -> None:
+        self,
+        n_components: int = 1,
+        tol: float = 0.001,
+        max_iter: int = 100,
+        random_state: Union[int, np.random.RandomState] = None,
+        init_means: np.ndarray = None,
+    ) -> None:
         """
         Initialises the expectation-maximisation algorithm.
 
@@ -46,8 +47,8 @@ class EMGMM:
         self.init_means = init_means
 
     def _compute_proba(
-            self, means : np.ndarray, covariances : np.ndarray, data : np.ndarray
-        ) -> np.ndarray:
+        self, means: np.ndarray, covariances: np.ndarray, data: np.ndarray
+    ) -> np.ndarray:
         """
         Computes the probabilities of data points for each gaussian mixture component
         given by the multivariate normal distributions - the resulting values are
@@ -72,12 +73,12 @@ class EMGMM:
         raise NotImplementedError()
 
     def _expectation(
-            self,
-            weights : np.ndarray,
-            means : np.ndarray,
-            covariances : np.ndarray,
-            data : np.ndarray
-        ) -> np.ndarray:
+        self,
+        weights: np.ndarray,
+        means: np.ndarray,
+        covariances: np.ndarray,
+        data: np.ndarray,
+    ) -> np.ndarray:
         """
         Computes the expectation step of the EM algorithm resulting in membership values (gamma).
 
@@ -98,8 +99,8 @@ class EMGMM:
         raise NotImplementedError()
 
     def _maximization(
-            self, membership : np.ndarray, data : np.ndarray
-        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        self, membership: np.ndarray, data: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Computes the maximisation step of the EM algorithm resulting in weights, means and
         covariance matrices maximising the probability of gaussian parameters under
@@ -127,7 +128,7 @@ class EMGMM:
         # - Return numpy arrays.
         raise NotImplementedError()
 
-    def fit(self, data : np.ndarray, labels : np.ndarray = None) -> None:
+    def fit(self, data: np.ndarray, labels: np.ndarray = None) -> None:
         """
         Runs the expectation-maximisation algorithm.
 
@@ -142,7 +143,9 @@ class EMGMM:
         self.covariances = np.zeros((self.n_components, data.shape[1], data.shape[1]))
         self.iters_to_convergence = self.max_iter
 
-        iter_membership, iter_weights, iter_means, iter_covariances = self._init_params(data)
+        iter_membership, iter_weights, iter_means, iter_covariances = self._init_params(
+            data
+        )
         iter_convergence = self.max_iter
         for i in range(self.max_iter):
             new_iter_membership = self._expectation(
@@ -165,7 +168,7 @@ class EMGMM:
 
         self.fitted = True
 
-    def predict(self, data : np.ndarray) -> np.ndarray:
+    def predict(self, data: np.ndarray) -> np.ndarray:
         """
         Predicts the class of the given data points. Note that the model splits the data
         into logical groups but it doesn't say which group is which.
@@ -181,8 +184,8 @@ class EMGMM:
         membership = self._expectation(self.weights, self.means, self.covariances, data)
         labels = np.argmax(membership, axis=1)
         return labels
-    
-    def score_samples(self, data : np.ndarray) -> np.ndarray:
+
+    def score_samples(self, data: np.ndarray) -> np.ndarray:
         """
         Computes the log-probabilities of data points for the most likely gaussian
         component.
@@ -197,7 +200,7 @@ class EMGMM:
         probs = self._compute_proba(self.means, self.covariances, data)
         log_proba = np.log(np.max(probs, axis=1) + np.spacing(1))
         return log_proba
-    
+
     def _check_fitted(self) -> None:
         """
         Raises an error if the method 'fit' hasn't been called so far.
@@ -206,10 +209,10 @@ class EMGMM:
             raise RuntimeError(
                 "The fitting method 'EMGMM.fit()' has to be called before 'EMGMM.predict()'!"
             )
-    
+
     def _init_params(
-            self, data : np.ndarray
-        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        self, data: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Computes initial parameters for the expectation-maximisation algorithm.
 
@@ -225,17 +228,24 @@ class EMGMM:
         data_min, data_max = np.min(data, axis=0), np.max(data, axis=0)
         membership = np.ones((data.shape[0], self.n_components)) / self.n_components
         weights = np.ones(self.n_components) / self.n_components
-        means = self.rng.random(
-            (self.n_components, data.shape[1])
-        ) * (data_max - data_min) + data_min if self.init_means is None else self.init_means
-        covariances = np.stack([np.identity(data.shape[1]) for _ in range(self.n_components)])
+        means = (
+            self.rng.random((self.n_components, data.shape[1])) * (data_max - data_min)
+            + data_min
+            if self.init_means is None
+            else self.init_means
+        )
+        covariances = np.stack(
+            [np.identity(data.shape[1]) for _ in range(self.n_components)]
+        )
         return membership, weights, means, covariances
 
-def main(args : argparse.Namespace) -> None:
+
+def main(args: argparse.Namespace) -> None:
     # NOTE: Your solution will be evaluated exclusively through the 'evaluator.py' script,
     # however, if it is easier for you to run experiments within this script then you can
     # edit this function to run your tests.
     raise NotImplementedError()
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)

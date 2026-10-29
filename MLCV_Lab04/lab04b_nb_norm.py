@@ -1,11 +1,10 @@
-
+import lab04_help
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm
-import matplotlib.pyplot as plt
-import lab04_help
+
 
 class GaussianNB:
-
     def __init__(self) -> None:
         """
         Creates a Gaussian naive bayes classifier with similar signature and methods as
@@ -15,7 +14,7 @@ class GaussianNB:
         """
         self._training_completed = False
 
-    def fit(self, data : np.ndarray, labels : np.ndarray) -> None:
+    def fit(self, data: np.ndarray, labels: np.ndarray) -> None:
         """Trains the Bernoulli Naive Bayes classifier."""
         # Store the number of training samples and the number of features for later.
         num_features = data.shape[1]
@@ -37,20 +36,22 @@ class GaussianNB:
             Xi = data[labels == self.class_names[class_idx]]
             # TODO: Compute the mean and standard deviation for every feature(pixel).
             # # - np.mean, np.std
-            self.mean_class[:, class_idx] = None
-            self.std_class[:, class_idx] = None
+            self.mean_class[:, class_idx] = np.mean(Xi, axis=0)
+            self.std_class[:, class_idx] = np.std(Xi, axis=0)
             # TODO: Compute the class probability (Prior).
-            self.p_class[class_idx] = None
-        
+            self.p_class[class_idx] = Xi.shape[0] / num_samples
+
         self._training_completed = True
 
-    def likelihood(self, data : np.ndarray) -> np.ndarray:
+    def likelihood(self, data: np.ndarray) -> np.ndarray:
         if not self._training_completed:
-            raise RuntimeError((
-                "GaussianNB method 'likelihood' was called before 'fit'. "
-                "Please ensure that the model finished training before prediction."
-            ))
-        
+            raise RuntimeError(
+                (
+                    "GaussianNB method 'likelihood' was called before 'fit'. "
+                    "Please ensure that the model finished training before prediction."
+                )
+            )
+
         # The 'probabilities' of belonging to classes for every object.
         class_likelihood = np.zeros([data.shape[0], self.num_classes])
 
@@ -67,15 +68,18 @@ class GaussianNB:
             p_cond[:, std == 0] = 0
             p_cond = np.log(np.where(p_cond > 0, p_cond, 1))
             # TODO: Compute the likelihood (decision function) for every image and class.
-            class_likelihood[:, class_idx] = None
-        
+            class_likelihood[:, class_idx] = np.sum(p_cond, axis=1) + np.log(
+                self.p_class[class_idx]
+            )
+
         return class_likelihood
-    
-    def predict(self, data : np.ndarray) -> np.ndarray:
+
+    def predict(self, data: np.ndarray) -> np.ndarray:
         """Computes the class prediction for each data sample."""
         # This method should result in the final class prediction which is the one with
         # highest likelihood - the right class is probably the most probable one.
         return np.argmax(self.likelihood(data), axis=1)
+
 
 def main():
     # Ensure that the data have the same form as in 'lab04a_nb_bin'.
@@ -95,38 +99,55 @@ def main():
 
     # TODO: Compute the accuracy of the classification.
     # - How many of the selected class indices match the original labels?
-    train_accuracy = None
-    test_accuracy = None
+    train_accuracy = np.sum(train_predictions == train.labels) / train.labels.size
+    test_accuracy = np.sum(test_predictions == test.labels) / test.labels.size
 
     print("Train set accuracy {:.2f}%".format(100 * train_accuracy))
     print("Test set accuracy {:.2f}%".format(100 * test_accuracy))
 
     # Let's look at images created from the probabilities, they should resemble the digits.
-    visualize_gaussian_bayes(bayes_classifier, int(np.round(np.sqrt(train.imgs.shape[1]))))
+    visualize_gaussian_bayes(
+        bayes_classifier, int(np.round(np.sqrt(train.imgs.shape[1])))
+    )
 
-def visualize_gaussian_bayes(bayes_classifier : GaussianNB, side : int) -> None:
+
+def visualize_gaussian_bayes(bayes_classifier: GaussianNB, side: int) -> None:
     fig, ax = plt.subplots(
-        3, len(bayes_classifier.class_names), figsize=(18, 6), subplot_kw={'aspect': 'equal'}
+        3,
+        len(bayes_classifier.class_names),
+        figsize=(18, 6),
+        subplot_kw={"aspect": "equal"},
     )
     for class_idx in range(len(bayes_classifier.class_names)):
         # Visualising random samples
-        ax[0, class_idx].set_title(f"Rnd. sample ({bayes_classifier.class_names[class_idx]})")
-        ax[0, class_idx].imshow(np.reshape(np.random.normal(
-            bayes_classifier.mean_class[:, class_idx],
-            bayes_classifier.std_class[:, class_idx]
-        ), [side, side]), cmap='gray')
+        ax[0, class_idx].set_title(
+            f"Rnd. sample ({bayes_classifier.class_names[class_idx]})"
+        )
+        ax[0, class_idx].imshow(
+            np.reshape(
+                np.random.normal(
+                    bayes_classifier.mean_class[:, class_idx],
+                    bayes_classifier.std_class[:, class_idx],
+                ),
+                [side, side],
+            ),
+            cmap="gray",
+        )
         # Visualising the distribution mean
         ax[1, class_idx].set_title(f"Mean ({bayes_classifier.class_names[class_idx]})")
-        ax[1, class_idx].imshow(np.reshape(
-            bayes_classifier.mean_class[:, class_idx], [side, side]
-        ), cmap='gray')
+        ax[1, class_idx].imshow(
+            np.reshape(bayes_classifier.mean_class[:, class_idx], [side, side]),
+            cmap="gray",
+        )
         # Visualising the distribution standard deviation
         ax[2, class_idx].set_title(f"Std. ({bayes_classifier.class_names[class_idx]})")
-        ax[2, class_idx].imshow(np.reshape(
-            bayes_classifier.std_class[:, class_idx], [side, side]
-        ), cmap='gray')
+        ax[2, class_idx].imshow(
+            np.reshape(bayes_classifier.std_class[:, class_idx], [side, side]),
+            cmap="gray",
+        )
     fig.tight_layout()
     plt.show()
-    
+
+
 if __name__ == "__main__":
     main()
