@@ -70,7 +70,15 @@ class EMGMM:
         #   the function 'scipy.stats.multivariate_normal' and use its parameter
         #   'allow_singular=True' to avoid random corner cases.
         # - Return numpy array.
-        raise NotImplementedError()
+        pdf = np.column_stack(
+            [
+                scipy.stats.multivariate_normal.pdf(
+                    mean=means[i], cov=covariances[i], x=data, allow_singular=True
+                )
+                for i in range(self.n_components)
+            ]
+        )
+        return pdf
 
     def _expectation(
         self,
@@ -96,7 +104,11 @@ class EMGMM:
         # according to the formula on slide 42 of the lecture 3 slides.
         # - Use 'self._computeProba' to compute the probabilities 'phi'.
         # - Return a numpy array.
-        raise NotImplementedError()
+        phi = self._compute_proba(means, covariances, data)
+        membership = (weights[:, np.newaxis] * phi.T) / np.sum(
+            weights[:, np.newaxis] * phi.T, axis=0
+        )
+        return membership.T
 
     def _maximization(
         self, membership: np.ndarray, data: np.ndarray
@@ -126,7 +138,19 @@ class EMGMM:
         #   - Also, the membership multiplication 'gamma' should happen only once, it
         #     should not be squared.
         # - Return numpy arrays.
-        raise NotImplementedError()
+        N = data.shape[0]
+        weights = np.sum(membership, axis=0) / N
+        means = (membership.T @ data) / np.sum(membership, axis=0)[:, np.newaxis]
+        cov = np.zeros((self.n_components, data.shape[1], data.shape[1]))
+        for m in range(self.n_components):
+            diff = data - means[m]
+            cov[m] = (
+                (membership[:, m][:, np.newaxis] * diff).T
+                @ diff
+                / np.sum(membership[:, m])
+            )
+
+        return weights, means, cov
 
     def fit(self, data: np.ndarray, labels: np.ndarray = None) -> None:
         """
